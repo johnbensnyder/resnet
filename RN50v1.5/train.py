@@ -37,11 +37,11 @@ if __name__ == "__main__":
 
         # ======= Training HParams ======== #
         iter_unit='epoch',
-        num_iter=50,
-        warmup_steps=50,
+        num_iter=90,
+        warmup_steps=500,
         batch_size=256,
         log_every_n_steps=100,
-        learning_rate_init=0.01,
+        learning_rate_init=0.1,
         weight_decay=1e-4,
         momentum=0.9,
         loss_scale=256,
