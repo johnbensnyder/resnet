@@ -502,8 +502,8 @@ class Runner(object):
         if self.run_hparams.data_dir is None and not is_benchmark:
             raise ValueError('`data_dir` must be specified for evaluation!')
 
-        if hvd_utils.is_using_hvd() and hvd.rank() != 0:
-            raise RuntimeError('Multi-GPU inference is not supported')
+        #if hvd_utils.is_using_hvd() and hvd.rank() != 0:
+        #    raise RuntimeError('Multi-GPU inference is not supported')
 
         estimator_params = {}
             
