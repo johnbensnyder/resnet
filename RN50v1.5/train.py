@@ -83,5 +83,11 @@ if __name__ == "__main__":
     runner.train(
         iter_unit=RUNNING_CONFIG.iter_unit,
         num_iter=RUNNING_CONFIG.num_iter,
-        batch_size=RUNNING_CONFIG.batch_size
+        batch_size=RUNNING_CONFIG.batch_size,
+        log_every_n_steps=RUNNING_CONFIG.log_every_n_steps,
+        weight_decay=RUNNING_CONFIG.weight_decay,
+        learning_rate_init=RUNNING_CONFIG.learning_rate_init,
+        momentum=RUNNING_CONFIG.momentum,
+        loss_scale=RUNNING_CONFIG.loss_scale,
+        use_static_loss_scaling=False
     )
