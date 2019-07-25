@@ -41,7 +41,7 @@ if __name__ == "__main__":
         warmup_steps=500,
         batch_size=256,
         log_every_n_steps=100,
-        learning_rate_init=0.02,
+        learning_rate_init=0.05,
         weight_decay=1e-4,
         momentum=0.9,
         loss_scale=256,
