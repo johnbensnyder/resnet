@@ -1,6 +1,7 @@
 import os
 
 import warnings
+
 warnings.simplefilter("ignore")
 
 import tensorflow as tf
@@ -13,9 +14,8 @@ from runtime import Runner
 # mpiexec --allow-run-as-root --bind-to socket -np 8 python train_and_eval.py
 
 if __name__ == "__main__":
-
     tf.logging.set_verbosity(tf.logging.ERROR)
-    
+
     RUNNING_CONFIG = tf.contrib.training.HParams(
         mode='train',
 
@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
         # ======= Training HParams ======== #
         iter_unit='epoch',
-        num_iter=10,
+        num_iter=50,
         warmup_steps=50,
         batch_size=256,
         log_every_n_steps=100,
@@ -53,10 +53,10 @@ if __name__ == "__main__":
         use_tf_amp=False,
         use_dali=False,
         gpu_memory_fraction=1,
-        
+
         seed=None,
     )
-    
+
     runner = Runner(
         # ========= Model HParams ========= #
         n_classes=RUNNING_CONFIG.n_classes,
@@ -79,30 +79,17 @@ if __name__ == "__main__":
         gpu_memory_fraction=RUNNING_CONFIG.gpu_memory_fraction,
         seed=RUNNING_CONFIG.seed
     )
-    
-    for i in range(10):
-        runner.train(
-                    iter_unit=RUNNING_CONFIG.iter_unit,
-                    num_iter=RUNNING_CONFIG.num_iter,
-                    batch_size=RUNNING_CONFIG.batch_size,
-                    warmup_steps=RUNNING_CONFIG.warmup_steps,
-                    log_every_n_steps=RUNNING_CONFIG.log_every_n_steps,
-                    weight_decay=RUNNING_CONFIG.weight_decay,
-                    learning_rate_init=RUNNING_CONFIG.learning_rate_init,
-                    momentum=RUNNING_CONFIG.momentum,
-                    loss_scale=RUNNING_CONFIG.loss_scale,
-                    use_static_loss_scaling=False,
-                    is_benchmark=RUNNING_CONFIG.mode == 'training_benchmark',
-                )
 
-        print("\n\n epoch: {}\n\n".format(i))
-
-        runner.evaluate(
-                    iter_unit='batch',
-                    num_iter=10,
-                    warmup_steps=RUNNING_CONFIG.warmup_steps,
-                    batch_size=RUNNING_CONFIG.batch_size,
-                    log_every_n_steps=RUNNING_CONFIG.log_every_n_steps,
-                    is_benchmark=False
-                )
-        
+    runner.train(
+        iter_unit=RUNNING_CONFIG.iter_unit,
+        num_iter=RUNNING_CONFIG.num_iter,
+        batch_size=RUNNING_CONFIG.batch_size,
+        warmup_steps=RUNNING_CONFIG.warmup_steps,
+        log_every_n_steps=RUNNING_CONFIG.log_every_n_steps,
+        weight_decay=RUNNING_CONFIG.weight_decay,
+        learning_rate_init=RUNNING_CONFIG.learning_rate_init,
+        momentum=RUNNING_CONFIG.momentum,
+        loss_scale=RUNNING_CONFIG.loss_scale,
+        use_static_loss_scaling=False,
+        is_benchmark=RUNNING_CONFIG.mode == 'training_benchmark',
+    )
