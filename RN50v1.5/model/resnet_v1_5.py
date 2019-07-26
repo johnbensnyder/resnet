@@ -447,7 +447,7 @@ class ResnetModel(object):
                 )
 
                 # trying to prevent nan
-                logits = tf.clip_by_value(logits, -25, 25)
+                logits = tf.clip_by_value(logits, -10, 10)
 
                 if logits.dtype != tf.float32:
                     logits = tf.cast(logits, tf.float32)
