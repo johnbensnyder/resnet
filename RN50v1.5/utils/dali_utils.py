@@ -23,8 +23,8 @@ import horovod.tensorflow as hvd
 from utils import image_processing
 from utils import hvd_utils
 
-from nvidia import dali
-import nvidia.dali.plugin.tf as dali_tf
+#from nvidia import dali
+#import nvidia.dali.plugin.tf as dali_tf
 
 __all__ = ["get_synth_input_fn", "normalized_inputs"]
 
