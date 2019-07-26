@@ -39,7 +39,7 @@ if __name__ == "__main__":
         iter_unit='epoch',
         num_iter=90,
         warmup_steps=1000,
-        batch_size=128,
+        batch_size=256,
         log_every_n_steps=100,
         learning_rate_init=0.05,
         weight_decay=1e-4,
