@@ -41,8 +41,8 @@ def learning_rate_scheduler(learning_rate_init, global_step, batch_size, num_bat
         return base_lr * (batch_size / 256.0)
 
     rescaled_lr = get_scaled_base_learning_rate()
-
-    boundaries = [int(num_batches_per_epoch * x) for x in [30, 60, 80, 90]]
+    # modified boundary from 30 to 50
+    boundaries = [int(num_batches_per_epoch * x) for x in [50, 60, 80, 90]]
 
     values = [1e0, 1e-1, 1e-2, 1e-3, 1e-4]
     values = [rescaled_lr * v for v in values]
