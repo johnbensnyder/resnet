@@ -263,7 +263,7 @@ class ResnetModel(object):
 
                     #optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate, momentum=params["momentum"])
                     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
-                    #optimizer = LarcOptimizer(optimizer, learning_rate, leta, clip=True)
+                    optimizer = LarcOptimizer(optimizer, learning_rate, 0.013, clip=True)
                     if params["apply_loss_scaling"]:
 
                         optimizer = FixedLossScalerOptimizer(optimizer, scale=params["loss_scale"])
