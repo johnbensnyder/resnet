@@ -446,6 +446,9 @@ class ResnetModel(object):
                     bias_initializer=self.dense_hparams.bias_initializer
                 )
 
+                # trying to prevent nan
+                logits = tf.clip_by_value(logits, -25, 25)
+
                 if logits.dtype != tf.float32:
                     logits = tf.cast(logits, tf.float32)
 
