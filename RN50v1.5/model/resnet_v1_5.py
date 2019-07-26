@@ -210,8 +210,9 @@ class ResnetModel(object):
                 }
 
                 #cross_entropy = tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels)
+                # attempt to fix NaNs
                 cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=labels)
-
+                cross_entropy = tf.math.reduce_mean(cross_entropy)
                 assert (cross_entropy.dtype == tf.float32)
                 tf.identity(cross_entropy, name='cross_entropy_loss_ref')
 
