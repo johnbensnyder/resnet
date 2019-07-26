@@ -38,13 +38,13 @@ if __name__ == "__main__":
         # ======= Training HParams ======== #
         iter_unit='epoch',
         num_iter=90,
-        warmup_steps=500,
-        batch_size=256,
+        warmup_steps=1000,
+        batch_size=128,
         log_every_n_steps=100,
         learning_rate_init=0.05,
         weight_decay=1e-4,
         momentum=0.9,
-        loss_scale=256,
+        loss_scale=128,
         use_static_loss_scaling=False,
         distort_colors=False,
 
