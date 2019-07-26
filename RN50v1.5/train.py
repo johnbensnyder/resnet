@@ -44,7 +44,7 @@ if __name__ == "__main__":
         learning_rate_init=0.01,
         weight_decay=1e-4,
         momentum=0.75,
-        loss_scale=256,
+        loss_scale=32,
         use_static_loss_scaling=False,
         distort_colors=False,
 
