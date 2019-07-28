@@ -14,4 +14,4 @@ model.compile(optimizer=tf.keras.optimizers.Adam(), loss=tf.keras.losses.categor
 train = train.repeat().batch(256)
 test = test.batch(256)
 
-model.fit(train, epochs=10, steps_per_epoch=100)
+model.fit(train, epochs=10)
