@@ -20,7 +20,6 @@ def preprocess_image_record(record):
     text = obj['image/class/text']
     return imgdata, label
 
-tdf = tdf.map(preprocess_image_record).shuffle(32).repeat().batch(32)
 
 def load_from_file(data_dir):
     '''
