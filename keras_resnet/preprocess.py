@@ -1,22 +1,6 @@
 import os
 import tensorflow as tf
 
-path = '/Users/jbsnyder/Projects/ResNet/imagenet/train/'
-
-os.listdir(path)
-
-tdf = tf.data.Dataset.from_tensor_slices([os.path.join(path, i) for i in os.listdir(path)])
-
-tdf = tdf.apply(
-        tf.data.experimental.parallel_interleave(
-            tf.data.TFRecordDataset,
-            cycle_length=10,
-            block_length=8,
-            sloppy=True,
-            prefetch_input_elements=16
-        ))
-
-
 feature_map = {
         'image/encoded': tf.FixedLenFeature([], tf.string, ''),
         'image/class/label': tf.FixedLenFeature([], tf.int64, -1),
