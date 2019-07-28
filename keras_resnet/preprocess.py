@@ -15,7 +15,7 @@ def preprocess_image_record(record):
     obj = tf.parse_single_example(record, feature_map)
     imgdata = tf.cast(tf.image.resize(tf.image.decode_jpeg(obj['image/encoded']),
                                       (244, 244)) / 255., tf.float16)
-    label = tf.one_hot(tf.cast(obj['image/class/label'], tf.float16), depth=1000)
+    label = tf.one_hot(tf.cast(obj['image/class/label'], tf.uint8), depth=1000)
     bbox = tf.stack([obj['image/object/bbox/%s' % x].values for x in ['ymin', 'xmin', 'ymax', 'xmax']])
     bbox = tf.transpose(tf.expand_dims(bbox, 0), [0, 2, 1])
     text = obj['image/class/text']
