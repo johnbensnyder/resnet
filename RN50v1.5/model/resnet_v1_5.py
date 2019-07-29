@@ -31,7 +31,7 @@ from utils import hvd_utils
 from utils.data_utils import normalized_inputs
 
 from utils.learning_rate import learning_rate_scheduler
-from utils.optimizers import FixedLossScalerOptimizer, LarcOptimizer, MixedPrecisionOptimizer
+from utils.optimizers import FixedLossScalerOptimizer, LarcOptimizer, MixedPrecisionOptimizer, LAMBOptimizer
 
 from dllogger.logger import LOGGER
 
@@ -262,9 +262,10 @@ class ResnetModel(object):
                     tf.summary.scalar('learning_rate', learning_rate)
 
                     # optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate, momentum=params["momentum"])
-                    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate*10)
-                    optimizer = LarcOptimizer(optimizer, learning_rate=learning_rate*10)
-                    optimizer = MixedPrecisionOptimizer(optimizer)
+                    #optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate*10)
+                    #optimizer = LarcOptimizer(optimizer, learning_rate=learning_rate*10)
+                    #optimizer = MixedPrecisionOptimizer(optimizer)
+                    optimizer = LAMBOptimizer(learning_rate=learning_rate)
 
                     if params["apply_loss_scaling"]:
 
