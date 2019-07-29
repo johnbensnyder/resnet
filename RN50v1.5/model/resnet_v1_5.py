@@ -259,7 +259,8 @@ class ResnetModel(object):
                     tf.identity(learning_rate, name='learning_rate_ref')
                     tf.summary.scalar('learning_rate', learning_rate)
 
-                    optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate, momentum=params["momentum"])
+                    #optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate, momentum=params["momentum"])
+                    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
 
                     if params["apply_loss_scaling"]:
 
