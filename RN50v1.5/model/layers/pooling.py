@@ -52,7 +52,7 @@ def max_pooling2d(inputs, pool_size=(2, 2), strides=None, padding='valid', data_
     if padding.lower() not in ['same', 'valid']:
         raise ValueError("Unknown padding: `%s` (accepted: ['same', 'valid'])" % padding)
 
-    '''net = tf.layers.max_pooling2d(
+    net = tf.layers.max_pooling2d(
         inputs,
         pool_size=pool_size,
         strides=strides,
@@ -61,8 +61,8 @@ def max_pooling2d(inputs, pool_size=(2, 2), strides=None, padding='valid', data_
         name=name
     )
 
-    return net'''
-    return tf.keras.layers.MaxPool2D(pool_size=pool_size,
+    return net
+    '''return tf.keras.layers.MaxPool2D(pool_size=pool_size,
                                      strides=strides,
                                      padding=padding,
-           data_format='channels_first' if data_format == 'NCHW' else 'channels_last')(inputs)
+           data_format='channels_first' if data_format == 'NCHW' else 'channels_last')(inputs)'''

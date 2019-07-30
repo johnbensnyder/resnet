@@ -44,14 +44,14 @@ def learning_rate_scheduler(learning_rate_init, global_step, batch_size, num_bat
 
     boundaries = [int(num_batches_per_epoch * x) for x in [30, 60, 80, 90]]
 
-    #values = [1e0, 1e-1, 1e-2, 1e-3, 1e-4]
+    # values = [1e0, 1e-1, 1e-2, 1e-3, 1e-4]
     values = [1e0, .5, 1e-1, .05, 1e-2]
     values = [rescaled_lr * v for v in values]
 
     lr = tf.train.piecewise_constant(global_step, boundaries, values)
 
     # First 5 Epochs are warmup
-    #warmup_steps = int(num_batches_per_epoch * 5)
+    # warmup_steps = int(num_batches_per_epoch * 5)
     warmup_steps = int(num_batches_per_epoch * 1)
 
     warmup_lr = (rescaled_lr * tf.cast(global_step, tf.float32) / tf.cast(warmup_steps, tf.float32))

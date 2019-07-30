@@ -20,7 +20,7 @@ import tensorflow as tf
 __all__ = ['conv2d']
 
 
-'''def conv2d(
+def conv2d(
     inputs,
     n_channels=8,
     kernel_size=(3, 3),
@@ -55,9 +55,9 @@ __all__ = ['conv2d']
         activation=None
     )
     
-    return net'''
+    return net
 
-def conv2d(
+'''def conv2d(
     inputs,
     n_channels=8,
     kernel_size=(3, 3),
@@ -79,4 +79,4 @@ def conv2d(
                                   use_bias=use_bias,
                                   kernel_initializer=kernel_initializer,
                                   bias_initializer=bias_initializer,
-                                  activation=None)(inputs)
+                                  activation=None)(inputs)'''
