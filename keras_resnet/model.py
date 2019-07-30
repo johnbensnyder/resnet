@@ -31,8 +31,8 @@ class IdentityBlock(tf.keras.Model):
 
     def call(self, x):
         shortcut = x
-        for layer in self.net:
-            x = self.net[layer](x)
+        for a_layer in self.net:
+            x = self.net[a_layer](x)
         x = shortcut + x
         return tf.keras.activations.relu(x)
 
@@ -72,10 +72,10 @@ class ConvolutionBlock(tf.keras.Model):
 
     def call(self, x):
         shortcut = x
-        for layer in self.net:
-            x = self.net[layer](x)
-        for layer in self.shortcut_path:
-            shortcut = self.shortcut_path[layer](shortcut)
+        for a_layer in self.net:
+            x = self.net[a_layer](x)
+        for a_layer in self.shortcut_path:
+            shortcut = self.shortcut_path[a_layer](shortcut)
         x = x + shortcut
         return tf.keras.activations.relu(x)
 
@@ -121,8 +121,8 @@ class ResNet50(tf.keras.Model):
                                                    kernel_initializer=tf.glorot_uniform_initializer())
 
     def call(self, x):
-        for layer in self.net:
-            x = self.net[layer](x)
+        for a_layer in self.net:
+            x = self.net[a_layer](x)
         return x
 
 
