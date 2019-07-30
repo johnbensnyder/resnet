@@ -20,7 +20,7 @@ import tensorflow as tf
 __all__ = ['conv2d']
 
 
-def conv2d(
+'''def conv2d(
     inputs,
     n_channels=8,
     kernel_size=(3, 3),
@@ -55,5 +55,28 @@ def conv2d(
         activation=None
     )
     
-    return net
+    return net'''
 
+def conv2d(
+    inputs,
+    n_channels=8,
+    kernel_size=(3, 3),
+    strides=(1, 1),
+    padding='VALID',
+    data_format='NHWC',
+    dilation_rate=(1, 1),
+    use_bias=True,
+    kernel_initializer=tf.variance_scaling_initializer(),
+    bias_initializer=tf.zeros_initializer(),
+    trainable=True
+):
+    return tf.keras.layers.Conv2D(filters=n_channels,
+                                  kernel_size=kernel_size,
+                                  strides=strides,
+                                  padding=padding,
+                                  data_format=data_format,
+                                  dilation_rate=dilation_rate,
+                                  use_bias=use_bias,
+                                  kernel_initializer=kernel_initializer,
+                                  bias_initializer=bias_initializer,
+                                  activation=None)(inputs)
