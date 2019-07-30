@@ -213,7 +213,7 @@ class ResnetModel(object):
                 # cross_entropy = tf.losses.softmax_cross_entropy(onehot_labels=tf.one_hot(labels, depth=1001), logits=logits)
                 # cross_entropy = tf.math.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=labels))
                 # cross_entropy = tf.keras.losses.CategoricalCrossentropy()(labels, logits)
-                cross_entropy = tf.keras.losses.categorical_crossentropy(labels, logits, from_logits=True)
+                cross_entropy = tf.keras.losses.categorical_crossentropy(tf.one_hot(labels, depth=1001), logits, from_logits=True)
                 assert (cross_entropy.dtype == tf.float32)
                 tf.identity(cross_entropy, name='cross_entropy_loss_ref')
 
