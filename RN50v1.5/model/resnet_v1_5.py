@@ -235,12 +235,12 @@ class ResnetModel(object):
                     l2_loss = tf.zeros(shape=(), dtype=tf.float32)
 
                 assert (l2_loss.dtype == tf.float32)
-                tf.identity(l2_loss, name='l2_loss_ref')
+                #tf.identity(l2_loss, name='l2_loss_ref')
 
                 total_loss = tf.add(cross_entropy, l2_loss, name="total_loss")
 
                 assert (total_loss.dtype == tf.float32)
-                tf.identity(total_loss, name='total_loss_ref')
+                #tf.identity(total_loss, name='total_loss_ref')
 
                 tf.summary.scalar('cross_entropy', cross_entropy)
                 tf.summary.scalar('l2_loss', l2_loss)
