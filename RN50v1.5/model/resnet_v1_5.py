@@ -263,9 +263,11 @@ class ResnetModel(object):
                     tf.summary.scalar('learning_rate', learning_rate)
 
                     #optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate, momentum=params["momentum"])
-                    # optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate*10)
+                    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
                     # optimizer = LarcOptimizer(optimizer, learning_rate=learning_rate*10)
-                    optimizer = tf.contrib.opt.LARSOptimizer(learning_rate=learning_rate)
+                    # optimizer = tf.contrib.opt.LARSOptimizer(learning_rate=learning_rate)
+                    loss_scale_manager = tf.contrib.mixed_precision.FixedLossScaleManager(5000)
+                    optimizer = tf.contrib.mixed_precision.LossScaleOptimizer(optimizer, loss_scale_manager)
                     # optimizer = FixedLossScalerOptimizer(optimizer, scale=256)
                     # optimizer = MixedPrecisionOptimizer(optimizer)
                     # lamb not working
