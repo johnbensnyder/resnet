@@ -65,7 +65,7 @@ def batch_norm(
 
         inputs = tf.reshape(inputs, new_shape)
 
-    net = tf.contrib.layers.batch_norm(
+    '''net = tf.contrib.layers.batch_norm(
         inputs,
         decay=decay,
         scale=scale,
@@ -76,13 +76,23 @@ def batch_norm(
         data_format=data_format,
         center=center,
         param_initializers=param_initializers
-    )
+    )'''
     # this is going to require a more extensive rewrite
     '''net = tf.keras.layers.BatchNormalization(momentum=decay,
                                              epsilon=epsilon,
                                              scale=scale,
                                              axis=1 if data_format=='NCHW' else -1,
                                              center=center)(inputs)'''
+    net = tf.layers.batch_normalization(
+        inputs,
+        momentum=decay,
+        scale=scale,
+        epsilon=epsilon,
+        training=is_training,
+        trainable=is_training,
+        axis=1 if data_format=='NCHW' else -1,
+        center=center
+    )
 
     if input_rank == 2:
         net = tf.reshape(net, [-1, input_channels])
