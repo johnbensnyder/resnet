@@ -211,8 +211,8 @@ class ResnetModel(object):
 
                 # cross_entropy = tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels)
                 # cross_entropy = tf.losses.softmax_cross_entropy(onehot_labels=tf.one_hot(labels, depth=1001), logits=logits)
-                cross_entropy = tf.math.reduce_mean(tf.cast(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=labels), tf.float16))
-                # assert (cross_entropy.dtype == tf.float32)
+                cross_entropy = tf.math.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=labels))
+                assert (cross_entropy.dtype == tf.float32)
                 tf.identity(cross_entropy, name='cross_entropy_loss_ref')
 
                 def loss_filter_fn(name):
@@ -223,8 +223,7 @@ class ResnetModel(object):
                         for tensor_name in ["batchnorm", "batch_norm", "batch_normalization"]
                     ])
 
-                # filtered_params = [tf.cast(v, tf.float32) for v in tf.trainable_variables() if loss_filter_fn(v.name)]
-                filtered_params = [tf.cast(v, tf.float16) for v in tf.trainable_variables() if loss_filter_fn(v.name)]
+                filtered_params = [tf.cast(v, tf.float32) for v in tf.trainable_variables() if loss_filter_fn(v.name)]
 
                 if len(filtered_params) != 0:
 
@@ -232,15 +231,14 @@ class ResnetModel(object):
                     l2_loss = tf.multiply(tf.add_n(l2_loss_per_vars), params["weight_decay"])
 
                 else:
-                    # l2_loss = tf.zeros(shape=(), dtype=tf.float32)
-                    l2_loss = tf.zeros(shape=(), dtype=tf.float16)
+                    l2_loss = tf.zeros(shape=(), dtype=tf.float32)
 
-                # assert (l2_loss.dtype == tf.float32)
+                assert (l2_loss.dtype == tf.float32)
                 tf.identity(l2_loss, name='l2_loss_ref')
 
                 total_loss = tf.add(cross_entropy, l2_loss, name="total_loss")
 
-                # assert (total_loss.dtype == tf.float32)
+                assert (total_loss.dtype == tf.float32)
                 tf.identity(total_loss, name='total_loss_ref')
 
                 tf.summary.scalar('cross_entropy', cross_entropy)
@@ -264,7 +262,7 @@ class ResnetModel(object):
 
                     # optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate, momentum=params["momentum"])
                     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate*10)
-                    # optimizer = LarcOptimizer(optimizer, learning_rate=learning_rate*10)
+                    optimizer = LarcOptimizer(optimizer, learning_rate=learning_rate*10)
                     # optimizer = FixedLossScalerOptimizer(optimizer, scale=256)
                     optimizer = MixedPrecisionOptimizer(optimizer)
                     # lamb not working
