@@ -264,7 +264,7 @@ class ResnetModel(object):
 
                     optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate, momentum=params["momentum"])
                     # optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate*10)
-                    # optimizer = LarcOptimizer(optimizer, learning_rate=learning_rate*10)
+                    optimizer = LarcOptimizer(optimizer, learning_rate=learning_rate*10)
                     # optimizer = FixedLossScalerOptimizer(optimizer, scale=256)
                     # optimizer = MixedPrecisionOptimizer(optimizer)
                     # lamb not working
