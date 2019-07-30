@@ -46,7 +46,7 @@ def _deserialize_image_record(record):
 
 
 def _decode_jpeg(imgdata, channels=3):
-    return tf.image.decode_jpeg(imgdata, channels=channels, fancy_upscaling=False, dct_method='INTEGER_FAST')
+    return tf.image.decode_jpeg(imgdata, channels=channels, fancy_upscaling=False, dct_method='INTEGER_ACCURATE')
 
 
 def _crop_and_filp(image, bbox, num_channels):
