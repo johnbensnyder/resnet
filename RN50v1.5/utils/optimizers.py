@@ -19,6 +19,7 @@
 
 from __future__ import print_function
 
+import re
 import tensorflow as tf
 
 __all__ = ['FixedLossScalerOptimizer']
