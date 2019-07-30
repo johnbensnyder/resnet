@@ -26,7 +26,7 @@ def dense(
     bias_initializer=tf.zeros_initializer()
 ):
 
-    net = tf.layers.dense(
+    '''net = tf.layers.dense(
         inputs,
         units=units,
         activation=None,
@@ -36,4 +36,9 @@ def dense(
         trainable=trainable
     )
 
-    return net
+    return net'''
+    return tf.keras.layers.Dense(units=units,
+                                 activation=None,
+                                 use_bias=use_bias,
+                                 kernel_initializer=kernel_initializer,
+                                 bias_initializer=bias_initializer)(inputs)
