@@ -52,7 +52,7 @@ def learning_rate_scheduler(learning_rate_init, global_step, batch_size, num_bat
 
     # First 5 Epochs are warmup
     # warmup_steps = int(num_batches_per_epoch * 5)
-    warmup_steps = int(num_batches_per_epoch * 1)
+    warmup_steps = int(num_batches_per_epoch * 2)
 
     warmup_lr = (rescaled_lr * tf.cast(global_step, tf.float32) / tf.cast(warmup_steps, tf.float32))
 
