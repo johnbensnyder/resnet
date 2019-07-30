@@ -209,8 +209,8 @@ class ResnetModel(object):
                     'accuracy_top5': acc_top5
                 }
 
-                cross_entropy = tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels)
-                # cross_entropy = tf.losses.softmax_cross_entropy(onehot_labels=tf.one_hot(labels, depth=1001), logits=logits)
+                #cross_entropy = tf.losses.sparse_softmax_cross_entropy(logits=logits, labels=labels)
+                cross_entropy = tf.losses.softmax_cross_entropy(onehot_labels=tf.one_hot(labels, depth=1001), logits=logits)
                 # cross_entropy = tf.math.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=labels))
                 assert (cross_entropy.dtype == tf.float32)
                 tf.identity(cross_entropy, name='cross_entropy_loss_ref')
