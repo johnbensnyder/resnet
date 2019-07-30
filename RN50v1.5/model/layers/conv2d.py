@@ -74,7 +74,7 @@ def conv2d(
                                   kernel_size=kernel_size,
                                   strides=strides,
                                   padding=padding,
-                                  data_format=data_format,
+                                  data_format='channels_last' if data_format == 'NHWC' else 'channels_first',
                                   dilation_rate=dilation_rate,
                                   use_bias=use_bias,
                                   kernel_initializer=kernel_initializer,
