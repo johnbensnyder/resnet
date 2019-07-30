@@ -22,24 +22,27 @@ __all__ = ['relu', 'softmax', 'tanh']
 
 def relu(inputs, name='relu'):
 
-    net = tf.nn.relu(inputs, name=name)
+    '''net = tf.nn.relu(inputs, name=name)
 
-    return net
+    return net'''
+    return tf.keras.activations.relu(inputs)
 
 
 def softmax(inputs, axis=None, name="softmax"):
 
-    net = tf.nn.softmax(
+    '''net = tf.nn.softmax(
         inputs,
         axis=axis,
         name=name,
     )
 
-    return net
+    return net'''
+    return tf.keras.activations.softmax(inputs, axis=axis)
 
 
 def tanh(inputs, name='tanh'):
 
-    net = tf.math.tanh(inputs, name=name)
+    '''net = tf.math.tanh(inputs, name=name)
 
-    return net
+    return net'''
+    return tf.keras.activations.tanh(inputs)
