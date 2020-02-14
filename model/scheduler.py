@@ -2,6 +2,28 @@ import tensorflow as tf
 from tensorflow.python.framework import ops
 from tensorflow.python.ops import math_ops
 
+class PiecewiseDecay(tf.keras.optimizers.schedules.LearningRateSchedule):
+    def __init__(self, break_points, learning_rates):
+        super(PiecewiseDecay, self).__init__()
+        assert len(learning_rates)==len(break_points) + 1
+        self.break_points = break_points
+        self.learning_rates = learning_rates
+        self.current_learning_rate = 0
+        self.next_break_point = 0
+    
+    def __call__(self, step):
+        if self.next_break_point<len(self.break_points) and \
+            step==self.break_points[self.next_break_point]:
+            self.next_break_point+=1
+            self.current_learning_rate+=1
+        return self.learning_rates[self.current_learning_rate]
+    
+    def get_config(self):
+        return {'break_points': self.break_points,
+                'learning_rates': self.learning_rates}
+            
+
+
 class WarmupExponentialDecay(tf.keras.optimizers.schedules.LearningRateSchedule):
     """
     Learning rate scheduler that linearly scales up during the first epoch
@@ -18,7 +40,6 @@ class WarmupExponentialDecay(tf.keras.optimizers.schedules.LearningRateSchedule)
     
     @tf.function
     def __call__(self, step, dtype=tf.float32):
-        dtype = dtype
         initial_learning_rate = math_ops.cast(self.initial_rate, dtype)
         decay_steps = math_ops.cast(self.decay_steps, dtype)
         decay_rate = math_ops.cast(self.decay_rate, dtype)

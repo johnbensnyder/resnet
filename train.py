@@ -18,8 +18,8 @@ train_index = [i.as_posix() for i in index_dir.glob('*1024')]
 validation_files = [i.as_posix() for i in data_dir.glob('*0128')]
 validation_index = [i.as_posix() for i in index_dir.glob('*0128')]
 
-num_epochs = 10
-batch_size = 128
+num_epochs = 30
+batch_size = 256
 global_batch = batch_size*hvd.size()
 image_count = 1282048
 steps_per_epoch = image_count//global_batch
@@ -35,28 +35,29 @@ for gpu in gpus:
     tf.config.experimental.set_memory_growth(gpu, True)
 if gpus:
     tf.config.experimental.set_visible_devices(gpus[hvd.local_rank()], 'GPU')
-# mpirun -np 4 -H localhost:4 --bind-to none --allow-run-as-root python train.py
+# mpirun -np 8 -H localhost:8 --bind-to none --allow-run-as-root python train.py
 
-scheduler = WarmupExponentialDecay(tf.cast(learning_rate, tf.float16), scaled_rate, steps_per_epoch//10, steps_per_epoch*num_epochs, 0.001)
+scheduler = WarmupExponentialDecay(tf.cast(learning_rate, tf.float16), scaled_rate, steps_per_epoch//10, steps_per_epoch*num_epochs, 0.00001)
 train_tdf = dali_generator(train_files, train_index, batch_size, num_threads=4, device_id=hvd.rank(), total_devices=hvd.size())
-validation_tdf = dali_generator(validation_files, validation_index, batch_size, num_threads=4, device_id=hvd.rank(), total_devices=hvd.size())
+if hvd.rank()==0:
+    validation_tdf = dali_generator(validation_files, validation_index, batch_size, num_threads=4, device_id=hvd.rank(), total_devices=1)
 
-model = Resnet50()
-optimizer = LARS(scheduler, use_nesterov=False, clip=False)
+#model = Resnet50()
+model = tf.keras.applications.ResNet50(weights=None, input_shape=(224, 224, 3), classes=1000)
+optimizer = LARS(0.8, use_nesterov=False, clip=False)
 loss_func = tf.keras.losses.SparseCategoricalCrossentropy()
 
 def validation_step(images, labels):
-    with tf.device('/gpu:0'):
-        pred = model(images, training=False)
-        loss = loss_func(labels, pred)
-        top_5_pred = tf.math.top_k(pred, k=5)[1]
-        top_1_pred = tf.math.top_k(pred, k=1)[1]
-        labels = tf.cast(labels, tf.int32)
+    pred = model(images, training=False)
+    loss = loss_func(labels, pred)
+    top_5_pred = tf.math.top_k(pred, k=5)[1]
+    top_1_pred = tf.math.top_k(pred, k=1)[1]
+    labels = tf.cast(labels, tf.int32)
     top_1 = sum([label in a_pred for label, a_pred in zip(labels, top_1_pred)])
     top_5 = sum([label in a_pred for label, a_pred in zip(labels, top_5_pred)])
     return loss, top_1, top_5
 
-def validation(steps = 128):
+def validation(steps = 32):
     loss_tracker = []
     top_1_tracker = 0
     top_5_tracker = 0
@@ -96,10 +97,11 @@ def train_epoch(steps, rank=0):
             images, labels = next(train_tdf)
             _ = train_step(images, labels).numpy()
 
-if hvd.rank()==0:
+'''if hvd.rank()==0:
     loss, top_1, top_5 = validation(steps=128)
     print("Starting Values")
     print("\nloss: {}\ntop_1: {}\ntop_5: {}".format(loss, top_1, top_5))
+'''
 
 if __name__=='__main__':
     for epoch in range(num_epochs):
