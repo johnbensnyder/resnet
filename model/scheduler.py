@@ -2,25 +2,44 @@ import tensorflow as tf
 from tensorflow.python.framework import ops
 from tensorflow.python.ops import math_ops
 
-class PiecewiseDecay(tf.keras.optimizers.schedules.LearningRateSchedule):
-    def __init__(self, break_points, learning_rates):
-        super(PiecewiseDecay, self).__init__()
-        assert len(learning_rates)==len(break_points) + 1
-        self.break_points = break_points
-        self.learning_rates = learning_rates
-        self.current_learning_rate = 0
-        self.next_break_point = 0
+class PiecewiseConstantDecay(tf.keras.optimizers.schedules.LearningRateSchedule):
+    """A LearningRateSchedule that uses a piecewise constant decay schedule."""
+
+    def __init__(self, initial_learning_rate, scaled_rate, steps_at_scale, boundaries, values, name=None):
+        super().__init__()
+
+        if len(boundaries) != len(values) - 1:
+            raise ValueError(
+                "The length of boundaries should be 1 less than the length of values"
+            )
+        self.initial_learning_rate = initial_learning_rate
+        self.scaled_rate = scaled_rate
+        self.steps_at_scale = steps_at_scale
+        self.boundaries = boundaries
+        self.values = values
+        self.name = name
+
+    @tf.function
+    def __call__(self, step, dtype=tf.float32):
+        index = 0
+        if step<self.steps_at_scale:
+            return tf.cast(self.compute_warmup(step), dtype)
+        else:
+            return tf.cast(self.compute_piecewise(step), dtype)
     
-    def __call__(self, step):
-        if self.next_break_point<len(self.break_points) and \
-            step==self.break_points[self.next_break_point]:
-            self.next_break_point+=1
-            self.current_learning_rate+=1
-        return self.learning_rates[self.current_learning_rate]
+    def compute_warmup(self, step):
+        step = tf.cast(step, tf.float16)
+        return ((self.scaled_rate*step)+(self.initial_learning_rate*(self.steps_at_scale-step)))/self.steps_at_scale
+    
+    def compute_piecewise(self, step):
+        index = 0
+        for i, b in enumerate(self.boundaries):
+            if step >= b:
+                index = i + 1
+        return tf.convert_to_tensor(self.values)[index]
     
     def get_config(self):
-        return {'break_points': self.break_points,
-                'learning_rates': self.learning_rates}
+        return {"boundaries": self.boundaries, "values": self.values, "name": self.name}
             
 
 
