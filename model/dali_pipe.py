@@ -8,13 +8,13 @@ import nvidia.dali.plugin.tf as dali_tf
 
 class TFRecordPipeline(Pipeline):
     def __init__(self, tfrecord_files, idx_files, 
-                 batch_size, device_id=0, 
+                 batch_size, device_id=0, rank=0,
                  total_devices=1, num_threads=4):
         super(TFRecordPipeline, self).__init__(batch_size,
                                          num_threads,
                                          device_id)
         self.input = ops.TFRecordReader(path = tfrecord_files, index_path = idx_files,
-                                        shard_id = device_id, num_shards = total_devices,
+                                        shard_id = rank, num_shards = total_devices,
                                         random_shuffle = True,
                                         features = {"image/encoded" : tfrec.FixedLenFeature((), tfrec.string, ""),
                                          'image/class/label':         tfrec.FixedLenFeature([1], tfrec.int64,  -1),
@@ -49,7 +49,7 @@ class TFRecordPipeline(Pipeline):
 
 def dali_generator(tfrecord_files, idx_files, 
                  batch_size, num_threads=4, device_id=0, 
-                 total_devices=1):
+                 rank=0, total_devices=1):
     pipe = TFRecordPipeline(tfrecord_files, idx_files, 
                  batch_size, device_id, 
                  total_devices, num_threads)

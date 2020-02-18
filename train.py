@@ -1,4 +1,4 @@
-from pathlib import Path
+from pathlib import Path 
 import tensorflow as tf
 import numpy as np
 from tqdm import tqdm
@@ -8,7 +8,21 @@ from model.lars import LARS
 from model.scheduler import WarmupExponentialDecay, PiecewiseConstantDecay
 import horovod.tensorflow as hvd
 import tensorflow_addons as tfa
-# mpirun -np 8 -H localhost:8 --bind-to none --allow-run-as-root python train.py
+# mpirun -np 8 --hostfile /workspace/shared_workspace/hosts --bind-to none --allow-run-as-root python train.py
+'''
+mpirun -np 8 --hostfile /workspace/shared_workspace/hosts --allow-run-as-root \
+--mca plm_rsh_no_tree_spawn 1 -bind-to none -map-by slot -mca pml ob1 \
+-mca btl_vader_single_copy_mechanism none \
+--mca btl tcp,self \
+--mca btl_tcp_if_exclude lo,docker0 \
+-x NCCL_TREE_THRESHOLD=4294967296 \
+-x NCCL_SOCKET_IFNAME=^docker0,lo \
+-x NCCL_MIN_NRINGS=13 \
+-x NCCL_DEBUG=INFO \
+-x HOROVOD_CYCLE_TIME=0.5 \
+-x HOROVOD_FUSION_THRESHOLD=67108864 \
+python train.py
+'''
 hvd.init()
 
 data_dir = Path('/workspace/shared_workspace/data/imagenet/')
@@ -34,12 +48,13 @@ for gpu in gpus:
 if gpus:
     tf.config.experimental.set_visible_devices(gpus[hvd.local_rank()], 'GPU')
 
-scheduler = WarmupExponentialDecay(learning_rate, 
-                                   scaled_rate, steps_per_epoch, steps_per_epoch*num_epochs, 0.0001)
-#scheduler = PiecewiseConstantDecay(learning_rate, scaled_rate, steps_per_epoch,
-#                                   [steps_per_epoch*3, steps_per_epoch*10, steps_per_epoch*30, steps_per_epoch*60],
-#                                   [scaled_rate, scaled_rate*0.1, scaled_rate*0.01, scaled_rate*0.001, scaled_rate*0.0001])
-train_tdf = dali_generator(train_files, train_index, per_gpu_batch, num_threads=8, device_id=hvd.rank(), total_devices=hvd.size())
+#scheduler = WarmupExponentialDecay(learning_rate, 
+#                                   scaled_rate, steps_per_epoch, steps_per_epoch*num_epochs, 0.0001)
+scheduler = PiecewiseConstantDecay(learning_rate, scaled_rate, steps_per_epoch,
+                                   [steps_per_epoch*3, steps_per_epoch*10, steps_per_epoch*30, steps_per_epoch*60],
+                                   [scaled_rate, scaled_rate*0.1, scaled_rate*0.01, scaled_rate*0.001, scaled_rate*0.0001])
+train_tdf = dali_generator(train_files, train_index, per_gpu_batch, num_threads=8, 
+                           device_id=hvd.local_rank(), rank=hvd.rank(), total_devices=hvd.size())
 validation_tdf = dali_generator(train_files, train_index, per_gpu_batch, num_threads=8, device_id=0, total_devices=1)
 
 model = tf.keras.applications.ResNet50(weights=None, input_shape=(224, 224, 3), classes=1000)
