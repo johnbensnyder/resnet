@@ -51,7 +51,7 @@ def dali_generator(tfrecord_files, idx_files,
                  batch_size, num_threads=4, device_id=0, 
                  rank=0, total_devices=1):
     pipe = TFRecordPipeline(tfrecord_files, idx_files, 
-                 batch_size, device_id, 
+                 batch_size, device_id, rank,
                  total_devices, num_threads)
     pipe.build()
     daliop = dali_tf.DALIIterator()
