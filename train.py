@@ -30,7 +30,7 @@ index_dir = Path('/workspace/shared_workspace/data/imagenet_index/')
 train_files = [i.as_posix() for i in data_dir.glob('*1024')]
 train_index = [i.as_posix() for i in index_dir.glob('*1024')]
 
-global_batch = 2048
+global_batch = 1024
 per_gpu_batch = global_batch//hvd.size()
 image_count = 1282048
 steps_per_epoch = image_count//global_batch
