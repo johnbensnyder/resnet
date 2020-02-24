@@ -2,6 +2,7 @@ from pathlib import Path
 import tensorflow as tf
 import numpy as np
 from tqdm import tqdm
+from time import time
 from model.dali_pipe import dali_generator
 from model.resnet import Resnet50
 from model.lars import LARS
@@ -10,7 +11,7 @@ import horovod.tensorflow as hvd
 import tensorflow_addons as tfa
 # mpirun -np 8 --hostfile /workspace/shared_workspace/hosts --bind-to none --allow-run-as-root python train.py
 '''
-mpirun -np 32 --hostfile /workspace/shared_workspace/hosts --allow-run-as-root \
+mpirun -np 8 -H localhost:8 --allow-run-as-root \
 --mca plm_rsh_no_tree_spawn 1 -bind-to none -map-by slot -mca pml ob1 \
 -mca btl_vader_single_copy_mechanism none \
 --mca btl tcp,self \
@@ -24,19 +25,20 @@ mpirun -np 32 --hostfile /workspace/shared_workspace/hosts --allow-run-as-root \
 python train.py
 '''
 hvd.init()
+tf.config.optimizer.set_experimental_options({"auto_mixed_precision": True})
 
 data_dir = Path('/workspace/shared_workspace/data/imagenet/')
 index_dir = Path('/workspace/shared_workspace/data/imagenet_index/')
 train_files = [i.as_posix() for i in data_dir.glob('*1024')]
 train_index = [i.as_posix() for i in index_dir.glob('*1024')]
 
-global_batch = 8192
+global_batch = 2048
 per_gpu_batch = global_batch//hvd.size()
 image_count = 1282048
 steps_per_epoch = image_count//global_batch
 learning_rate = 0.01*global_batch/256
-scaled_rate = 0.1*(global_batch/256)
-num_epochs = 90
+scaled_rate = 0.5*(global_batch/256)
+num_epochs = 30
 
 tf.keras.backend.set_floatx('float16')
 tf.keras.backend.set_epsilon(1e-4)
@@ -49,7 +51,7 @@ if gpus:
     tf.config.experimental.set_visible_devices(gpus[hvd.local_rank()], 'GPU')
 
 scheduler = WarmupExponentialDecay(learning_rate, 
-                                   scaled_rate, steps_per_epoch, steps_per_epoch*num_epochs, 0.0001)
+                                   scaled_rate, steps_per_epoch, steps_per_epoch*num_epochs, 0.00001)
 #scheduler = PiecewiseConstantDecay(learning_rate, scaled_rate, steps_per_epoch,
 #                                   [steps_per_epoch*3, steps_per_epoch*10, steps_per_epoch*30, steps_per_epoch*60],
 #                                   [scaled_rate, scaled_rate*0.1, scaled_rate*0.01, scaled_rate*0.001, scaled_rate*0.0001])
@@ -74,7 +76,7 @@ def validation_step(images, labels):
     # top_5 = sum([label in a_pred for label, a_pred in zip(labels, top_5_pred)])
     return loss, top_1_pred, top_5_pred
 
-def validation(steps = 8):
+def validation(steps = 64):
     loss_tracker = []
     top_1_tracker = 0
     top_5_tracker = 0
@@ -102,8 +104,8 @@ def train_step(images, labels):
 
 def train_epoch(steps, rank=0):
     if rank==0:
-        loss, top1, top5 = validation()
-        print("Validation loss: {} Top 1 {} Top 5 {}".format(loss, top1, top5))
+        #val_loss, top_1, top_5 = validation()
+        #print("Validation loss: {} Top 1 {} Top 5 {}".format(val_loss, top_1, top_5))
         loss = []
         progressbar = tqdm(range(steps))
         for batch in progressbar:
@@ -111,8 +113,10 @@ def train_epoch(steps, rank=0):
             loss.append(train_step(images, labels).numpy())
             progressbar.set_description("train loss: {0:.4f}, learning rate: {1:.4f}".format(np.array(loss[-100:]).mean(),
                                                                                              scheduler(optimizer.iterations)))
-        #loss = np.array(loss).mean()
-        #print("\ntrain_loss: {}\nvalidation_loss: {}\ntop_1: {}\ntop_5: {}".format(loss, val_loss, top_1, top_5))
+        val_loss, top_1, top_5 = validation()
+        loss = np.array(loss).mean()
+        print("\ntrain_loss: {}\nvalidation_loss: {}\ntop_1: {}\ntop_5: {}".format(loss, val_loss, top_1, top_5))
+        return loss, val_loss, top_1, top_5
     else:
         for batch in range(steps):
             images, labels = next(train_tdf)
@@ -125,7 +129,17 @@ def train_epoch(steps, rank=0):
 '''
 
 if __name__=='__main__':
-    for epoch in range(num_epochs):
+    start_time = time()
+    top_1 = 0
+    #for epoch in range(num_epochs):
+    while top_1<.76:
         if hvd.rank()==0:
             print("starting epoch: {}".format(epoch))
-        train_epoch(steps_per_epoch, hvd.rank())
+            loss, val_loss, top_1, top_5 = train_epoch(steps_per_epoch, hvd.rank())
+        else:
+            train_epoch(steps_per_epoch, hvd.rank())
+    if hvd.rank()==0:
+        with open("resnet_perf_1.txt", 'w') as outfile:
+            outfile.write("time {}\nloss {}\nval loss {}\ntop 1 {}\ntop 5 {}\nbatch {}".format(time()-start_time,
+                                                                                     loss, val_loss, top_1, top_5,
+                                                                                              global_batch))
