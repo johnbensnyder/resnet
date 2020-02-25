@@ -8,7 +8,7 @@ from model.resnet import Resnet50
 from model.lars import LARS
 from model.scheduler import WarmupExponentialDecay, PiecewiseConstantDecay
 import horovod.tensorflow as hvd
-import tensorflow_addons as tfa
+#import tensorflow_addons as tfa
 # mpirun -np 8 --hostfile /workspace/shared_workspace/hosts --bind-to none --allow-run-as-root python train.py
 '''
 mpirun -np 8 -H localhost:8 --allow-run-as-root \
@@ -27,8 +27,8 @@ python train.py
 hvd.init()
 tf.config.optimizer.set_experimental_options({"auto_mixed_precision": True})
 
-data_dir = Path('/workspace/shared_workspace/data/imagenet/')
-index_dir = Path('/workspace/shared_workspace/data/imagenet_index/')
+data_dir = Path('/home/ubuntu/shared_workspace/data/imagenet/')
+index_dir = Path('/home/ubuntu/shared_workspace/data/imagenet_index/')
 train_files = [i.as_posix() for i in data_dir.glob('*1024')]
 train_index = [i.as_posix() for i in index_dir.glob('*1024')]
 
@@ -38,7 +38,7 @@ image_count = 1282048
 steps_per_epoch = image_count//global_batch
 learning_rate = 0.01*global_batch/256
 scaled_rate = 0.5*(global_batch/256)
-num_epochs = 30
+num_epochs = 120
 
 tf.keras.backend.set_floatx('float16')
 tf.keras.backend.set_epsilon(1e-4)
@@ -50,11 +50,11 @@ for gpu in gpus:
 if gpus:
     tf.config.experimental.set_visible_devices(gpus[hvd.local_rank()], 'GPU')
 
-scheduler = WarmupExponentialDecay(learning_rate, 
-                                   scaled_rate, steps_per_epoch, steps_per_epoch*num_epochs, 0.00001)
-#scheduler = PiecewiseConstantDecay(learning_rate, scaled_rate, steps_per_epoch,
-#                                   [steps_per_epoch*3, steps_per_epoch*10, steps_per_epoch*30, steps_per_epoch*60],
-#                                   [scaled_rate, scaled_rate*0.1, scaled_rate*0.01, scaled_rate*0.001, scaled_rate*0.0001])
+#scheduler = WarmupExponentialDecay(learning_rate, 
+#                                   scaled_rate, steps_per_epoch, steps_per_epoch*num_epochs, 0.00001)
+scheduler = PiecewiseConstantDecay(learning_rate, scaled_rate, steps_per_epoch,
+                                   [steps_per_epoch*3, steps_per_epoch*10, steps_per_epoch*30, steps_per_epoch*60],
+                                   [scaled_rate, scaled_rate*0.1, scaled_rate*0.01, scaled_rate*0.001, scaled_rate*0.0001])
 train_tdf = dali_generator(train_files, train_index, per_gpu_batch, num_threads=8, 
                            device_id=hvd.local_rank(), rank=hvd.rank(), total_devices=hvd.size())
 validation_tdf = dali_generator(train_files, train_index, per_gpu_batch, num_threads=8, device_id=0, total_devices=1)
@@ -131,10 +131,12 @@ def train_epoch(steps, rank=0):
 if __name__=='__main__':
     start_time = time()
     top_1 = 0
+    epoch = 1
     #for epoch in range(num_epochs):
     while top_1<.76:
         if hvd.rank()==0:
             print("starting epoch: {}".format(epoch))
+            epoch += 1
             loss, val_loss, top_1, top_5 = train_epoch(steps_per_epoch, hvd.rank())
         else:
             train_epoch(steps_per_epoch, hvd.rank())
