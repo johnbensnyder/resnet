@@ -11,18 +11,18 @@ import horovod.tensorflow as hvd
 #import tensorflow_addons as tfa
 # mpirun -np 8 --hostfile /workspace/shared_workspace/hosts --bind-to none --allow-run-as-root python train.py
 '''
-mpirun -np 8 -H localhost:8 --allow-run-as-root \
+mpirun -np 32 --hostfile /home/ubuntu/shared_workspace/hosts \
 --mca plm_rsh_no_tree_spawn 1 -bind-to none -map-by slot -mca pml ob1 \
 -mca btl_vader_single_copy_mechanism none \
 --mca btl tcp,self \
 --mca btl_tcp_if_exclude lo,docker0 \
--x NCCL_TREE_THRESHOLD=4294967296 \
 -x NCCL_SOCKET_IFNAME=^docker0,lo \
--x NCCL_MIN_NRINGS=13 \
 -x NCCL_DEBUG=INFO \
--x HOROVOD_CYCLE_TIME=0.5 \
--x HOROVOD_FUSION_THRESHOLD=67108864 \
-python train.py
+/home/ubuntu/anaconda3/envs/tensorflow2_p36/bin/python /home/ubuntu/shared_workspace/resnet/train.py
+
+-x FI_PROVIDER="efa"
+-x FI_EFA_TX_MIN_CREDITS=64
+
 '''
 hvd.init()
 tf.config.optimizer.set_experimental_options({"auto_mixed_precision": True})
@@ -32,13 +32,13 @@ index_dir = Path('/home/ubuntu/shared_workspace/data/imagenet_index/')
 train_files = [i.as_posix() for i in data_dir.glob('*1024')]
 train_index = [i.as_posix() for i in index_dir.glob('*1024')]
 
-global_batch = 2048
+global_batch = 8192
 per_gpu_batch = global_batch//hvd.size()
 image_count = 1282048
 steps_per_epoch = image_count//global_batch
 learning_rate = 0.01*global_batch/256
 scaled_rate = 0.5*(global_batch/256)
-num_epochs = 120
+num_epochs = 60
 
 tf.keras.backend.set_floatx('float16')
 tf.keras.backend.set_epsilon(1e-4)
@@ -50,11 +50,11 @@ for gpu in gpus:
 if gpus:
     tf.config.experimental.set_visible_devices(gpus[hvd.local_rank()], 'GPU')
 
-#scheduler = WarmupExponentialDecay(learning_rate, 
-#                                   scaled_rate, steps_per_epoch, steps_per_epoch*num_epochs, 0.00001)
-scheduler = PiecewiseConstantDecay(learning_rate, scaled_rate, steps_per_epoch,
-                                   [steps_per_epoch*3, steps_per_epoch*10, steps_per_epoch*30, steps_per_epoch*60],
-                                   [scaled_rate, scaled_rate*0.1, scaled_rate*0.01, scaled_rate*0.001, scaled_rate*0.0001])
+scheduler = WarmupExponentialDecay(learning_rate, 
+                                   scaled_rate, steps_per_epoch, steps_per_epoch*num_epochs, 0.00001)
+#scheduler = PiecewiseConstantDecay(learning_rate, scaled_rate, steps_per_epoch,
+#                                   [steps_per_epoch*3, steps_per_epoch*10, steps_per_epoch*30, steps_per_epoch*60],
+#                                   [scaled_rate, scaled_rate*0.1, scaled_rate*0.01, scaled_rate*0.001, scaled_rate*0.0001])
 train_tdf = dali_generator(train_files, train_index, per_gpu_batch, num_threads=8, 
                            device_id=hvd.local_rank(), rank=hvd.rank(), total_devices=hvd.size())
 validation_tdf = dali_generator(train_files, train_index, per_gpu_batch, num_threads=8, device_id=0, total_devices=1)
