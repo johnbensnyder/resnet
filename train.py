@@ -12,6 +12,8 @@ import horovod.tensorflow as hvd
 # mpirun -np 8 --hostfile /workspace/shared_workspace/hosts --bind-to none --allow-run-as-root python train.py
 '''
 mpirun -np 32 --hostfile /home/ubuntu/shared_workspace/hosts \
+-x FI_PROVIDER="efa" \
+-x FI_EFA_TX_MIN_CREDITS=64 \
 --mca plm_rsh_no_tree_spawn 1 -bind-to none -map-by slot -mca pml ob1 \
 -mca btl_vader_single_copy_mechanism none \
 --mca btl tcp,self \
@@ -20,8 +22,15 @@ mpirun -np 32 --hostfile /home/ubuntu/shared_workspace/hosts \
 -x NCCL_DEBUG=INFO \
 /home/ubuntu/anaconda3/envs/tensorflow2_p36/bin/python /home/ubuntu/shared_workspace/resnet/train.py
 
--x FI_PROVIDER="efa"
--x FI_EFA_TX_MIN_CREDITS=64
+mpirun -np 32 --hostfile /home/ubuntu/shared_workspace/hosts \
+-x FI_PROVIDER="sockets" \
+--mca plm_rsh_no_tree_spawn 1 -bind-to none -map-by slot -mca pml ob1 \
+-mca btl_vader_single_copy_mechanism none \
+--mca btl tcp,self \
+--mca btl_tcp_if_exclude lo,docker0 \
+-x NCCL_SOCKET_IFNAME=^docker0,lo \
+-x NCCL_DEBUG=INFO \
+/home/ubuntu/anaconda3/envs/tensorflow2_p36/bin/python /home/ubuntu/shared_workspace/resnet/train.py
 
 '''
 hvd.init()
@@ -32,7 +41,7 @@ index_dir = Path('/home/ubuntu/shared_workspace/data/imagenet_index/')
 train_files = [i.as_posix() for i in data_dir.glob('*1024')]
 train_index = [i.as_posix() for i in index_dir.glob('*1024')]
 
-global_batch = 8192
+global_batch = 16384
 per_gpu_batch = global_batch//hvd.size()
 image_count = 1282048
 steps_per_epoch = image_count//global_batch
