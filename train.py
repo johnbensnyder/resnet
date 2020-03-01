@@ -142,7 +142,7 @@ if __name__=='__main__':
     top_1 = 0
     epoch = 1
     #for epoch in range(num_epochs):
-    for epoch in num_epochs:
+    for epoch in range(num_epochs):
         if hvd.rank()==0:
             print("starting epoch: {}".format(epoch))
             loss, val_loss, top_1, top_5 = train_epoch(steps_per_epoch, hvd.rank())
