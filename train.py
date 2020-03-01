@@ -46,8 +46,8 @@ per_gpu_batch = global_batch//hvd.size()
 image_count = 1282048
 steps_per_epoch = image_count//global_batch
 learning_rate = 0.01*global_batch/256
-scaled_rate = 0.5*(global_batch/256)
-num_epochs = 60
+scaled_rate = 0.1*(global_batch/256)
+num_epochs = 70
 
 tf.keras.backend.set_floatx('float16')
 tf.keras.backend.set_epsilon(1e-4)
@@ -142,10 +142,9 @@ if __name__=='__main__':
     top_1 = 0
     epoch = 1
     #for epoch in range(num_epochs):
-    while top_1<.76:
+    for epoch in num_epochs:
         if hvd.rank()==0:
             print("starting epoch: {}".format(epoch))
-            epoch += 1
             loss, val_loss, top_1, top_5 = train_epoch(steps_per_epoch, hvd.rank())
         else:
             train_epoch(steps_per_epoch, hvd.rank())
