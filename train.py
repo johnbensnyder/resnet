@@ -59,11 +59,11 @@ for gpu in gpus:
 if gpus:
     tf.config.experimental.set_visible_devices(gpus[hvd.local_rank()], 'GPU')
 
-#scheduler = WarmupExponentialDecay(learning_rate, 
-#                                   scaled_rate, steps_per_epoch, steps_per_epoch*num_epochs, 1e-8)
-scheduler = PiecewiseConstantDecay(learning_rate, scaled_rate, steps_per_epoch,
-                                   [steps_per_epoch*3, steps_per_epoch*10, steps_per_epoch*30, steps_per_epoch*50],
-                                   [scaled_rate, scaled_rate*0.1, scaled_rate*0.01, scaled_rate*0.001, scaled_rate*0.0001])
+scheduler = WarmupExponentialDecay(learning_rate, 
+                                   scaled_rate, steps_per_epoch, steps_per_epoch*num_epochs, 1e-8)
+#scheduler = PiecewiseConstantDecay(learning_rate, scaled_rate, steps_per_epoch,
+#                                   [steps_per_epoch*3, steps_per_epoch*10, steps_per_epoch*30, steps_per_epoch*50],
+#                                   [scaled_rate, scaled_rate*0.1, scaled_rate*0.01, scaled_rate*0.001, scaled_rate*0.0001])
 train_tdf = dali_generator(train_files, train_index, per_gpu_batch, num_threads=8, 
                            device_id=hvd.local_rank(), rank=hvd.rank(), total_devices=hvd.size())
 validation_tdf = dali_generator(train_files, train_index, per_gpu_batch, num_threads=8, device_id=0, total_devices=1)
