@@ -79,5 +79,5 @@ class WarmupExponentialDecay(tf.keras.optimizers.schedules.LearningRateSchedule)
     
     def get_config(self):
         return {"initial_rate": self.initial_rate, "scaled_rate": self.scaled_rate, 
-                "steps_at_scale": self.steps_at_scale, "total_steps": self.total_steps, 
+                "steps_at_scale": self.steps_at_scale, "decay_rate": self.decay_rate, 
                 "decay": self.decay_steps, "name": self.name}
