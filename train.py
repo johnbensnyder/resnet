@@ -169,7 +169,7 @@ def main():
     #                scaled_rate, steps_per_epoch*5, steps_per_epoch*num_epochs, 1e-8)
     scheduler = PiecewiseConstantDecay(learning_rate,
                         scaled_rate, steps_per_epoch*5, 
-                        [steps_per_epoch*30, steps_per_epoch*60], [scaled_rate, scaled_rate*.1, scaled_rate*.01])
+                        [steps_per_epoch*20, steps_per_epoch*50], [scaled_rate, scaled_rate*.1, scaled_rate*.01])
     train_tdf = dali_generator(train_files, train_index, per_gpu_batch, num_threads=8, 
                                device_id=hvd.local_rank(), rank=hvd.rank(), total_devices=hvd.size())
     validation_tdf = dali_generator(val_files, val_index, per_gpu_batch, num_threads=8, device_id=0, total_devices=1)
