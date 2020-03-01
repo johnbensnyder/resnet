@@ -122,10 +122,10 @@ def train_epoch(steps, rank=0):
             loss.append(train_step(images, labels).numpy())
             progressbar.set_description("train loss: {0:.4f}, learning rate: {1:.4f}".format(np.array(loss[-100:]).mean(),
                                                                                              scheduler(optimizer.iterations)))
-        val_loss, top_1, top_5 = validation()
-        loss = np.array(loss).mean()
-        print("\ntrain_loss: {}\nvalidation_loss: {}\ntop_1: {}\ntop_5: {}".format(loss, val_loss, top_1, top_5))
-        return loss, val_loss, top_1, top_5
+        #val_loss, top_1, top_5 = validation()
+        #loss = np.array(loss).mean()
+        #print("\ntrain_loss: {}\nvalidation_loss: {}\ntop_1: {}\ntop_5: {}".format(loss, val_loss, top_1, top_5))
+        #return loss, val_loss, top_1, top_5
     else:
         for batch in range(steps):
             images, labels = next(train_tdf)
@@ -145,11 +145,12 @@ if __name__=='__main__':
     for epoch in range(num_epochs):
         if hvd.rank()==0:
             print("starting epoch: {}".format(epoch))
-            loss, val_loss, top_1, top_5 = train_epoch(steps_per_epoch, hvd.rank())
+            train_epoch(steps_per_epoch, hvd.rank())
         else:
             train_epoch(steps_per_epoch, hvd.rank())
     if hvd.rank()==0:
         with open("resnet_perf_1.txt", 'w') as outfile:
-            outfile.write("time {}\nloss {}\nval loss {}\ntop 1 {}\ntop 5 {}\nbatch {}".format(time()-start_time,
-                                                                                     loss, val_loss, top_1, top_5,
+            val_loss, top_1, top_5 = validation(steps = 256)
+            outfile.write("time {}\nval loss {}\ntop 1 {}\ntop 5 {}\nbatch {}".format(time()-start_time,
+                                                                                        val_loss, top_1, top_5,
                                                                                               global_batch))
