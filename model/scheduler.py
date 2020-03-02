@@ -18,27 +18,25 @@ class PiecewiseConstantDecay(tf.keras.optimizers.schedules.LearningRateSchedule)
         self.boundaries = boundaries
         self.values = values
         self.name = name
-        self.iteration = tf.Variable(0)
         self.index = tf.Variable(0)
 
     @tf.function
     def __call__(self, step, dtype=tf.float32):
-        self.iteration=self.iteration.assign_add(1)
-        if self.iteration<self.steps_at_scale:
-            return tf.cast(self.compute_warmup(), dtype)
+        step = tf.cast(step, dtype)
+        if step<self.steps_at_scale:
+            return tf.cast(self.compute_warmup(step), dtype)
         else:
-            return tf.cast(self.compute_piecewise(), dtype)
+            return tf.cast(self.compute_piecewise(step), dtype)
     
-    def compute_warmup(self):
-        step = tf.cast(step, tf.float16)
-        return ((self.scaled_rate*self.iteration)+(self.initial_learning_rate*(self.steps_at_scale-self.iteration)))/self.steps_at_scale
+    def compute_warmup(self, step):
+        return ((self.scaled_rate*step)+(self.initial_learning_rate*(self.steps_at_scale-step)))/self.steps_at_scale
     
-    def compute_piecewise(self):
+    def compute_piecewise(self, step):
         self.index.assign(0)
         for i, b in enumerate(self.boundaries):
-            if self.iteration >= b:
+            if step >= b:
                 self.index.assign(i+1)
-        return tf.convert_to_tensor(self.values)[index]
+        return tf.convert_to_tensor(self.values)[self.index]
     
     def get_config(self):
         return {"boundaries": self.boundaries, "values": self.values, "name": self.name}

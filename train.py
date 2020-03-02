@@ -90,8 +90,11 @@ def train_step(images, labels, model, optimizer, loss_func):
     with tf.GradientTape() as tape:
         pred = model(images, training=True)
         loss = loss_func(labels, pred)
+        scaled_loss = optimizer.get_scaled_loss(loss)
     tape = hvd.DistributedGradientTape(tape)
-    grads = tape.gradient(loss, model.trainable_variables)
+    scaled_grads = tape.gradient(scaled_loss, model.trainable_variables)
+    grads = optimizer.get_unscaled_gradients(scaled_grads)
+    # grads = tape.gradient(loss, model.trainable_variables)
     optimizer.apply_gradients(zip(grads, model.trainable_variables))
     return loss
 
@@ -169,7 +172,7 @@ def main():
     #                scaled_rate, steps_per_epoch*5, steps_per_epoch*num_epochs, 1e-8)
     scheduler = PiecewiseConstantDecay(learning_rate,
                         scaled_rate, steps_per_epoch*5, 
-                        [steps_per_epoch*20, steps_per_epoch*50], [scaled_rate, scaled_rate*.1, scaled_rate*.01])
+                        [steps_per_epoch*30, steps_per_epoch*60], [scaled_rate, scaled_rate*.1, scaled_rate*.01])
     train_tdf = dali_generator(train_files, train_index, per_gpu_batch, num_threads=8, 
                                device_id=hvd.local_rank(), rank=hvd.rank(), total_devices=hvd.size())
     validation_tdf = dali_generator(val_files, val_index, per_gpu_batch, num_threads=8, device_id=0, total_devices=1)
