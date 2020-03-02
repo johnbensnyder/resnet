@@ -18,6 +18,25 @@ mpirun -np 8 -H localhost:8 --bind-to none \
 --batch_size 4096 \
 --num_epochs 70 \
 --val_per_epoch
+
+
+mpirun -np 32 -H \
+--hostfile /home/ubuntu/shared_workspace/hosts \
+-x FI_PROVIDER="efa" \
+-x FI_EFA_TX_MIN_CREDITS=64 \
+--mca plm_rsh_no_tree_spawn 1 -bind-to none -map-by slot -mca pml ob1 \
+-mca btl_vader_single_copy_mechanism none \
+--mca btl tcp,self \
+--mca btl_tcp_if_exclude lo,docker0 \
+-x NCCL_SOCKET_IFNAME=^docker0,lo \
+-x NCCL_DEBUG=INFO \
+/home/ubuntu/anaconda3/envs/tensorflow2_p36/bin/python \
+/home/ubuntu/shared_workspace/resnet/train.py \
+--data_dir /home/ubuntu/shared_workspace/data/imagenet \
+--index_dir /home/ubuntu/shared_workspace/data/imagenet_index \
+--batch_size 16384 \
+--num_epochs 90 \
+--val_per_epoch
 '''
 
 
@@ -194,7 +213,7 @@ def main():
     if hvd.rank()==0:
         running_time = time()-start_time
         val_loss, top_1, top_5 = validation(validation_tdf, model, loss_func, per_gpu_batch, steps = 256)
-        print("\nval_loss {0:4.f}\ntop_1 {1:4.f}\ntop_5 {2:4.f}".format(val_loss, top_1, top_5))
+        print("\nval_loss {}\ntop_1 {}\ntop_5 {}".format(val_loss, top_1, top_5))
         with open("resnet_perf_1.txt", 'w') as outfile:
             outfile.write("time {}\nval loss {}\ntop 1 {}\ntop 5 {}\nbatch {}\nhvd size {}".format(running_time,
                                                                                         val_loss, top_1, top_5,
