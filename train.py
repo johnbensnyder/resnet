@@ -20,7 +20,7 @@ mpirun -np 8 -H localhost:8 --bind-to none \
 --val_per_epoch
 
 
-mpirun -np 32 -H \
+mpirun -np 32 \
 --hostfile /home/ubuntu/shared_workspace/hosts \
 -x FI_PROVIDER="efa" \
 -x FI_EFA_TX_MIN_CREDITS=64 \
@@ -35,7 +35,7 @@ mpirun -np 32 -H \
 --data_dir /home/ubuntu/shared_workspace/data/imagenet \
 --index_dir /home/ubuntu/shared_workspace/data/imagenet_index \
 --batch_size 16384 \
---num_epochs 90 \
+--num_epochs 120 \
 --val_per_epoch
 '''
 
