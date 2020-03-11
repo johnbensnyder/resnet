@@ -5,16 +5,15 @@ from tqdm import tqdm
 from model.dali_pipe import dali_generator
 from model.lars import LARS
 from model.scheduler import WarmupExponentialDecay, PiecewiseConstantDecay
-import horovod.tensorflow as hvd
 import tensorflow_addons as tfa
 import argparse
 from time import time
 '''
 /home/ubuntu/anaconda3/envs/tensorflow2_p36/bin/python \
-/home/ubuntu/shared_workspace/resnet/train.py \
+/home/ubuntu/shared_workspace/resnet/train_single.py \
 --data_dir /home/ubuntu/shared_workspace/data/imagenet \
 --index_dir /home/ubuntu/shared_workspace/data/imagenet_index \
---batch_size 256 \
+--batch_size 128 \
 --num_epochs 70
 
 mpirun -np 8 -H localhost:8 --bind-to none \
@@ -72,16 +71,9 @@ mpirun -np 32 --hostfile /home/ubuntu/shared_workspace/hosts \
 /home/ubuntu/anaconda3/envs/tensorflow2_p36/bin/python /home/ubuntu/shared_workspace/resnet/train.py
 
 '''
-hvd.init()
 
 tf.config.optimizer.set_jit(True)
 tf.config.optimizer.set_experimental_options({"auto_mixed_precision": True})
-
-gpus = tf.config.experimental.list_physical_devices('GPU')
-for gpu in gpus:
-    tf.config.experimental.set_memory_growth(gpu, True)
-if gpus:
-    tf.config.experimental.set_visible_devices(gpus[hvd.local_rank()], 'GPU')
 
 @tf.function
 def validation_step(images, labels, model, loss_func):
@@ -117,7 +109,7 @@ def train_step(images, labels, model, optimizer, loss_func):
         pred = model(images, training=True)
         loss = loss_func(labels, pred)
         scaled_loss = optimizer.get_scaled_loss(loss)
-    tape = hvd.DistributedGradientTape(tape)
+    #tape = hvd.DistributedGradientTape(tape)
     scaled_grads = tape.gradient(scaled_loss, model.trainable_variables)
     grads = optimizer.get_unscaled_gradients(scaled_grads)
     # grads = tape.gradient(loss, model.trainable_variables)
@@ -177,6 +169,7 @@ def add_cli_args():
     return cmdline
 
 def main():
+    print("starting")
     cmdline = add_cli_args()
     FLAGS, unknown_args = cmdline.parse_known_args()
     data_dir = Path(FLAGS.data_dir)
@@ -185,15 +178,15 @@ def main():
     train_index = [i.as_posix() for i in index_dir.glob('*1024')]
     val_files = [i.as_posix() for i in data_dir.glob('*0128')]
     val_index = [i.as_posix() for i in index_dir.glob('*0128')]
-
+    print("1")
     num_epochs = FLAGS.num_epochs
     global_batch = FLAGS.batch_size
-    per_gpu_batch = global_batch//hvd.size()
+    per_gpu_batch = global_batch
     image_count = 1282048
     steps_per_epoch = image_count//global_batch
     learning_rate = 0.001*global_batch/256
     scaled_rate = 0.1*global_batch/256
-
+    print("2")
     #scheduler = WarmupExponentialDecay(learning_rate, 
     #                scaled_rate, steps_per_epoch*5, steps_per_epoch*num_epochs, 1e-8*global_batch/256)
     scheduler = PiecewiseConstantDecay(learning_rate,
@@ -201,31 +194,27 @@ def main():
                         [steps_per_epoch*15, steps_per_epoch*30, steps_per_epoch*50], 
                         [scaled_rate, scaled_rate*.1, scaled_rate*.01, scaled_rate*.001])
     train_tdf = dali_generator(train_files, train_index, per_gpu_batch, num_threads=8, 
-                               device_id=hvd.local_rank(), rank=hvd.rank(), total_devices=hvd.size())
+                               device_id=0, rank=0, total_devices=1)
     validation_tdf = dali_generator(val_files, val_index, per_gpu_batch, num_threads=8, device_id=0, total_devices=1)
     model = tf.keras.applications.ResNet50(weights=None, input_shape=(224, 224, 3), classes=1000)
     optimizer = LARS(scheduler, use_nesterov=False, clip=False)
     optimizer = tf.keras.mixed_precision.experimental.LossScaleOptimizer(optimizer, "dynamic")
     loss_func = tf.keras.losses.SparseCategoricalCrossentropy()
-    
+    print("3")
     start_time = time()
     for epoch in range(num_epochs):
-        if hvd.rank()==0:
-            print("starting epoch: {}".format(epoch+1))
-            train_epoch(steps_per_epoch, train_tdf, model, optimizer, loss_func, scheduler, hvd.rank())
-            if FLAGS.val_per_epoch:
-                val_loss, top_1, top_5 = validation(validation_tdf, model, loss_func, per_gpu_batch, steps = 64)
-                print("\nval_loss {}\ntop_1 {}\ntop_5 {}".format(val_loss, top_1, top_5))
-        else:
-            train_epoch(steps_per_epoch, train_tdf, model, optimizer, loss_func, scheduler, hvd.rank())
-    if hvd.rank()==0:
-        running_time = time()-start_time
-        val_loss, top_1, top_5 = validation(validation_tdf, model, loss_func, per_gpu_batch, steps = 256)
-        print("\nval_loss {}\ntop_1 {}\ntop_5 {}".format(val_loss, top_1, top_5))
-        with open("resnet_perf_1.txt", 'w') as outfile:
-            outfile.write("time {}\nval loss {}\ntop 1 {}\ntop 5 {}\nbatch {}\nhvd size {}".format(running_time,
-                                                                                        val_loss, top_1, top_5,
-                                                                                              global_batch, hvd.size()))
+        print("starting epoch: {}".format(epoch+1))
+        train_epoch(steps_per_epoch, train_tdf, model, optimizer, loss_func, scheduler, 0)
+        if FLAGS.val_per_epoch:
+            val_loss, top_1, top_5 = validation(validation_tdf, model, loss_func, per_gpu_batch, steps = 64)
+            print("\nval_loss {}\ntop_1 {}\ntop_5 {}".format(val_loss, top_1, top_5))
+    running_time = time()-start_time
+    val_loss, top_1, top_5 = validation(validation_tdf, model, loss_func, per_gpu_batch, steps = 256)
+    print("\nval_loss {}\ntop_1 {}\ntop_5 {}".format(val_loss, top_1, top_5))
+    with open("resnet_perf_1.txt", 'w') as outfile:
+        outfile.write("time {}\nval loss {}\ntop 1 {}\ntop 5 {}\nbatch {}\nhvd size {}".format(running_time,
+                                                                                    val_loss, top_1, top_5,
+                                                                                          global_batch, 1))
 
 if __name__ == '__main__':
     main()
