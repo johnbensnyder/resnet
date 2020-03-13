@@ -27,7 +27,7 @@ mpirun -np 8 -H localhost:8 --bind-to none \
 --val_per_epoch
 
 
-mpirun -np 32 \
+mpirun -np 128 \
 --hostfile /home/ubuntu/shared_workspace/hosts \
 -x FI_PROVIDER="efa" \
 -x FI_EFA_TX_MIN_CREDITS=64 \
@@ -41,9 +41,8 @@ mpirun -np 32 \
 /home/ubuntu/shared_workspace/resnet/train.py \
 --data_dir /home/ubuntu/shared_workspace/data/imagenet \
 --index_dir /home/ubuntu/shared_workspace/data/imagenet_index \
---batch_size 16384 \
---num_epochs 120 \
---val_per_epoch
+--batch_size 32768 \
+--num_epochs 90
 '''
 
 
@@ -194,12 +193,12 @@ def main():
     learning_rate = 0.001*global_batch/256
     scaled_rate = 0.1*global_batch/256
 
-    scheduler = WarmupExponentialDecay(learning_rate, 
-                    scaled_rate, steps_per_epoch*5, steps_per_epoch*num_epochs, 1e-3*global_batch/256)
-    #scheduler = PiecewiseConstantDecay(learning_rate,
-    #                    scaled_rate, steps_per_epoch*5, 
-    #                    [steps_per_epoch*15, steps_per_epoch*30, steps_per_epoch*50], 
-    #                    [scaled_rate, scaled_rate*.1, scaled_rate*.01, scaled_rate*.001])
+    #scheduler = WarmupExponentialDecay(learning_rate, 
+    #                scaled_rate, steps_per_epoch*5, steps_per_epoch*num_epochs, 1e-4*global_batch/256)
+    scheduler = PiecewiseConstantDecay(learning_rate,
+                        scaled_rate, steps_per_epoch*5, 
+                        [steps_per_epoch*30, steps_per_epoch*60, steps_per_epoch*80], 
+                        [scaled_rate, scaled_rate*.1, scaled_rate*.01, scaled_rate*.001])
     train_tdf = dali_generator(train_files, train_index, per_gpu_batch, num_threads=8, 
                                device_id=hvd.local_rank(), rank=hvd.rank(), total_devices=hvd.size())
     validation_tdf = dali_generator(val_files, val_index, per_gpu_batch, num_threads=8, device_id=0, total_devices=1)
