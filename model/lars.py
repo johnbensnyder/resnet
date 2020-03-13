@@ -112,7 +112,7 @@ class LARS(tf.keras.optimizers.Optimizer):
                 1.0,
             )
             if callable(self._hyper['learning_rate']):
-                scaled_lr = self._hyper['learning_rate'](self.iterations, trust_ratio.dtype) * trust_ratio
+                scaled_lr = self._hyper['learning_rate'](self.iterations) * trust_ratio
             else:
                 scaled_lr = self._serialize_hyperparameter("learning_rate") * trust_ratio
             
