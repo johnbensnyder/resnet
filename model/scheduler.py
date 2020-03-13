@@ -41,7 +41,7 @@ class PiecewiseConstantDecay(tf.keras.optimizers.schedules.LearningRateSchedule)
     def compute_piecewise(self, step):
         if self.current_rate<len(self.boundaries) and step==self.boundaries[self.current_rate]:
             self.current_rate+=1
-        return self.values[self.current_rate]
+        return tf.gather(self.values, self.current_rate)
     
     def get_config(self):
         return {"boundaries": self.boundaries, "values": self.values, "name": self.name}
