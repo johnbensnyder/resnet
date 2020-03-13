@@ -39,7 +39,7 @@ class PiecewiseConstantDecay(tf.keras.optimizers.schedules.LearningRateSchedule)
                 self.index.assign(i+1)
         return tf.convert_to_tensor(self.values)[self.index]'''
     def compute_piecewise(self, step):
-        if self.current_rate<len(self.boundaries) and step==tf.gather(self.boundaries, self.current_rate):
+        if self.current_rate<len(self.boundaries) and tf.cast(step, tf.int32)==tf.gather(self.boundaries, self.current_rate):
             self.current_rate+=1
         return tf.gather(self.values, self.current_rate)
     
