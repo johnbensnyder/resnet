@@ -195,10 +195,12 @@ def main():
 
     #scheduler = WarmupExponentialDecay(learning_rate, 
     #                scaled_rate, steps_per_epoch*5, steps_per_epoch*num_epochs, 1e-4*global_batch/256)
-    scheduler = PiecewiseConstantDecay(learning_rate,
-                        scaled_rate, steps_per_epoch*5, 
-                        [steps_per_epoch*30, steps_per_epoch*60, steps_per_epoch*80], 
-                        [scaled_rate, scaled_rate*.1, scaled_rate*.01, scaled_rate*.001])
+    #scheduler = PiecewiseConstantDecay(learning_rate,
+    #                    scaled_rate, steps_per_epoch*5, 
+    #                    [steps_per_epoch*30, steps_per_epoch*60, steps_per_epoch*80], 
+    #                    [scaled_rate, scaled_rate*.1, scaled_rate*.01, scaled_rate*.001])
+    scheduler = tf.keras.optimizers.schedules.PiecewiseConstantDecay([steps_per_epoch*30, steps_per_epoch*60, steps_per_epoch*80],
+                                                                     [scaled_rate, scaled_rate*.1, scaled_rate*.01, scaled_rate*.001])
     train_tdf = dali_generator(train_files, train_index, per_gpu_batch, num_threads=8, 
                                device_id=hvd.local_rank(), rank=hvd.rank(), total_devices=hvd.size())
     validation_tdf = dali_generator(val_files, val_index, per_gpu_batch, num_threads=8, device_id=0, total_devices=1)
